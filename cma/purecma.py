@@ -306,7 +306,8 @@ class CMAES(OOOptimizer):  # could also inherit from object
                  maxfevals='100 * popsize + '  # 100 iterations plus...
                            '150 * (N + 3)**2 * popsize**0.5',
                  randn=random_normalvariate,
-                 randompsigma=False):
+                 randompsigma=False,
+                 randompgaussstddev=1):
         """Instantiate `CMAES` object instance using `xstart` and `sigma`.
 
         Parameters
@@ -328,6 +329,8 @@ class CMAES(OOOptimizer):  # could also inherit from object
                 `random.normalvariate`
             `randompsigma`: `bool`
                 should init with random p sigma parameter?
+            `randompgaussstddev`: `float`
+                standard deviation of normal distribution for ps init
 
         Details: this method initializes the dynamic state variables and
         creates a `CMAESParameters` instance for static parameters.
@@ -346,7 +349,7 @@ class CMAES(OOOptimizer):  # could also inherit from object
         self.pc = N * [0]  # evolution path for C
         self.ps = N * [0]  # and for sigma
         if(randompsigma):
-            self.ps = [gauss(0,1) for _ in range(0,N)]
+            self.ps = [gauss(0,randompgaussstddev) for _ in range(0,N)]
         self.C = DecomposingPositiveMatrix(N)  # covariance matrix
         self.counteval = 0  # countiter should be equal to counteval / lam
         self.fitvals = []   # for bookkeeping output and termination
