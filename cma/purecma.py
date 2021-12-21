@@ -54,6 +54,7 @@ from sys import stdout as _stdout # not strictly necessary
 import warnings as _warnings
 from math import log, exp
 from random import normalvariate as random_normalvariate
+from random import gauss
 
 try:
     from .interfaces import OOOptimizer, BaseDataLogger as _BaseDataLogger
@@ -304,7 +305,8 @@ class CMAES(OOOptimizer):  # could also inherit from object
                  ftarget=None,
                  maxfevals='100 * popsize + '  # 100 iterations plus...
                            '150 * (N + 3)**2 * popsize**0.5',
-                 randn=random_normalvariate):
+                 randn=random_normalvariate,
+                 randompsigma=False):
         """Instantiate `CMAES` object instance using `xstart` and `sigma`.
 
         Parameters
@@ -324,6 +326,8 @@ class CMAES(OOOptimizer):  # could also inherit from object
             `randn`: `callable`
                 normal random number generator, by default
                 `random.normalvariate`
+            `randompsigma`: `bool`
+                should init with random p sigma parameter?
 
         Details: this method initializes the dynamic state variables and
         creates a `CMAESParameters` instance for static parameters.
@@ -341,6 +345,8 @@ class CMAES(OOOptimizer):  # could also inherit from object
         self.sigma = sigma
         self.pc = N * [0]  # evolution path for C
         self.ps = N * [0]  # and for sigma
+        if(randompsigma):
+            self.ps = [gauss(0,1) for _ in range(0,N)]
         self.C = DecomposingPositiveMatrix(N)  # covariance matrix
         self.counteval = 0  # countiter should be equal to counteval / lam
         self.fitvals = []   # for bookkeeping output and termination
