@@ -20,15 +20,17 @@ def AverageCountCMAESIterations(samplesCount, targetMinimumValue, initialSigma, 
 	iterCount = iterCount / samplesCount
 	return iterCount
 
-def RunTest(targetMin):
-	while targetMin > 0.001:
-		nonRandomIters = AverageCountCMAESIterations(numSamples, targetMin, initSigma, False, stdDev, initX, testFun)
-		randomIters = AverageCountCMAESIterations(numSamples, targetMin, initSigma, True, stdDev, initX, testFun)
+def RunTest(targetMin, steps = []):
+	if(len(steps) <= 0):
+		steps = [0.5, 0.25, 0.1, 0.01, 0.001, 0.0001]
+	while len(steps) > 0:
+		nonRandomIters = AverageCountCMAESIterations(numSamples, targetMin + steps[0], initSigma, False, stdDev, initX, testFun)
+		randomIters = AverageCountCMAESIterations(numSamples, targetMin + steps[0], initSigma, True, stdDev, initX, testFun)
 		if(nonRandomIters < randomIters):
-			print(Fore.RED + str(nonRandomIters) + " < " + str(randomIters) + " [Non-random vs random] [targetMin:" + str(targetMin) + "]" + Style.RESET_ALL)
+			print(Fore.RED + str(nonRandomIters) + " < " + str(randomIters) + " [Non-random vs random] [targetMin:" + str(targetMin + steps[0]) + "]" + Style.RESET_ALL)
 		else:
-			print(Fore.GREEN + str(nonRandomIters) + " > " + str(randomIters) + " [Non-random vs random] [targetMin:" + str(targetMin) + "]" + Style.RESET_ALL)
-		targetMin = targetMin / 2
+			print(Fore.GREEN + str(nonRandomIters) + " > " + str(randomIters) + " [Non-random vs random] [targetMin:" + str(targetMin + steps[0]) + "]" + Style.RESET_ALL)
+		steps.pop(0)
 
 
 initSigma = 0.5
