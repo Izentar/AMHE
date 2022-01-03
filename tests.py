@@ -2,6 +2,7 @@ from cma import purecma as pcma
 import cma
 from colorama import init
 from colorama import Fore, Back, Style
+from random import gauss
 init()
 
 def CountCMAESIterations(targetMinimumValue, initialSigma, randompsigma, standardDeviation, initialXValues, testFunction):
@@ -22,7 +23,7 @@ def AverageCountCMAESIterations(samplesCount, targetMinimumValue, initialSigma, 
 
 def RunTest(targetMin, steps = []):
 	if(len(steps) <= 0):
-		steps = [0.5, 0.25, 0.1, 0.01, 0.001, 0.0001]
+		steps = [1.0, 0.5, 0.25, 0.1, 0.01, 0.001, 0.0001, 0.00001]
 	while len(steps) > 0:
 		nonRandomIters = AverageCountCMAESIterations(numSamples, targetMin + steps[0], initSigma, False, stdDev, initX, testFun)
 		randomIters = AverageCountCMAESIterations(numSamples, targetMin + steps[0], initSigma, True, stdDev, initX, testFun)
@@ -33,15 +34,15 @@ def RunTest(targetMin, steps = []):
 		steps.pop(0)
 
 
-initSigma = 0.5
-initX = 8 * [0.1]
+initSigma = 0.3
+initX = [gauss(0,1) for _ in range(0,8)]
 stdDev = 1
 
-numSamples = 10
+numSamples = 100
 
-testFun = pcma.ff.sphere	# Min = 0 at x=(0,...,0)
+#testFun = pcma.ff.sphere	# Min = 0 at x=(0,...,0)
+#RunTest(0)
+#testFun = cma.ff.rosen		# Min = 0 at x=(1,...,1)
+#RunTest(1)
+testFun = pcma.ff.elli		# Min = 0 at x=(0,...,0)
 RunTest(0)
-testFun = cma.ff.rosen		# Min = 0 at x=(1,...,1)
-RunTest(1)
-
-#testFun = pcma.ff.elli
