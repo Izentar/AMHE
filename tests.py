@@ -4,7 +4,7 @@ from random import gauss
 import argparse
 import csv
 import pandas as pd
-import os
+import os, sys
 
 def CountCMAESIterations(targetMinimumValue, initialSigma, m1_initEvolutionPath, initXFun, dim, testFunction):
 	xstart = initXFun(dim)
@@ -91,13 +91,17 @@ def getTestFunction(ftype: str):
 
 def saveInfo(args, returnVals, verbose = True):
 	if(not os.path.isfile(args.o[0])):
-		df = pd.DataFrame(columns=['function', 'args'])
-		df.to_csv(args.o[0], sep=';')
+		df = pd.DataFrame(columns=['args', 'input', 'function'])
+		df.to_csv(args.o[0], index=False, header=True, sep=';', index_label=False)
 
 	outdf = pd.read_csv(args.o[0], sep=';', header=0, index_col=False)
 	arguments = str(args)
+	arg = str()
+	for i in list(sys.argv):
+		arg += str(i) + ' '
 	row = {
 		'function': args.testf[0],
+		'input': arg,
 		'args': str(args)
 	}
 
@@ -111,20 +115,14 @@ def saveInfo(args, returnVals, verbose = True):
 					break
 			outdf.insert(pos, column = str(step), value='0')
 		row[str(step)] = str(result)
-	newrow = pd.DataFrame(row, index=[1])
-	print(newrow)
-	print()
-	#print(outdf)
-	print()
-	print()
-	print()
+	newrow = pd.DataFrame(row, index=[-1])
 
-	outdf.append(newrow)
+	outdf = outdf.append(newrow, ignore_index=True)
 	outdf.reindex(fill_value = '0')
-	print(outdf)
 	outdf.to_csv(args.o[0], index=False, header=True, sep=';', index_label=False)
 	if(verbose):
 		print(str(args))
+		print(arg)
 		print(str(outdf))
 
 if __name__ == '__main__':
