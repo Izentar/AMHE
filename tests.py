@@ -49,7 +49,7 @@ def createParser():
 	parser.add_argument('--esgm', type=float, nargs=1, required=False, default=None, help="estart gauss mean.")
 	parser.add_argument('--esgstd', type=float, nargs=1, required=False, default=None, help="estart gauss std.")
 
-	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen'], help="Type of test function.")
+	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen', 'sphere', 'hyperelli', 'rastrigin', 'schwefel', 'bukin', 'schaffer'], help="Type of test function.")
 	parser.add_argument('-r', type=int, nargs=1, required=True, help="Number of repetition of the experiment.")
 	parser.add_argument('-o', type=str, nargs=1, required=True, help="Output file")
 
@@ -77,17 +77,25 @@ def getTestFunction(ftype: str):
 		Returns test function and target minimum value (the value of global minimum).
 	"""
 	if(ftype == 'elli'):
-		return pcma.ff.elli, 0.0
+		return cma.ff.elli, 0.0    # Default is  elli(self, x, rot=0, xoffset=0, cond=1e6, actuator_noise=0.0, both=False)
 	if(ftype == 'rosen'):
-		return pcma.ff.rosen, 0.0
+		return cma.ff.rosen, 0.0
+	if(ftype == 'sphere'):
+		return pcma.ff.sphere, 0.0
+	if(ftype == 'hyperelli'):
+		return cma.ff.hyperelli, 0.0
+	if(ftype == 'rastrigin'):
+		return cma.ff.rastrigin, 0.0
+	if(ftype == 'schwefel'):
+		return cma.ff.schwefelmult, 0.0
+	# Below functions in default variants are meant for 2-dimensional problems,
+	# these versions however are simplistically generalized to d-dim
+	if(ftype == 'bukin'):
+		return pcma.ff.bukin, 0.0
+	if(ftype == 'schaffer'):
+		return pcma.ff.schaffer, 0.0
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
-
-	#testFun = pcma.ff.sphere	# Min = 0 at x=(0,...,0)
-	#RunTest(0)
-	#testFun = cma.ff.rosen		# Min = 0 at x=(1,...,1)
-	#RunTest(1)
-	#testFun = pcma.ff.elli		# Min = 0 at x=(0,...,0)
 
 def saveInfo(args, returnVals, verbose = True):
 	if(not os.path.isfile(args.o[0])):
