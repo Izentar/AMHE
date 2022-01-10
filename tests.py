@@ -91,9 +91,9 @@ def getTestFunction(ftype: str):
 	# Below functions in default variants are meant for 2-dimensional problems,
 	# these versions however are simplistically generalized to d-dim
 	if(ftype == 'bukin'):
-		return pcma.ff.bukin, 0.0
+		return cma.ff.bukin, 0.0
 	if(ftype == 'schaffer'):
-		return pcma.ff.schaffer, 0.0
+		return cma.ff.schaffer, 0.0
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
