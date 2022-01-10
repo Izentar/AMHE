@@ -1,6 +1,6 @@
+import cma # https://github.com/CMA-ES/pycma
 from cma import purecma as pcma
-import cma
-from random import gauss
+import random
 import argparse
 import csv
 import pandas as pd
@@ -53,16 +53,21 @@ def createParser():
 	parser.add_argument('--sigma', type=float, nargs=1, required=True, help="Initial sigma value.")
 	parser.add_argument('--dim', type=int, nargs=1, required=True, help="Number of dimensions.")
 	parser.add_argument('--maxl', type=int, nargs=1, required=False, default=21000, help="Max number of loops / evolution steps.")
+	parser.add_argument('--seed', type=int, nargs=1, required=False, default=None, help="Random generator seed. Default current time.")
 
-	parser.add_argument('--xstart', type=str, nargs=1, required=True, choices=['gauss'], help="Initial solution vector type.")
+	parser.add_argument('--xstart', type=str, nargs=1, required=True, choices=['gauss', 'uniform', 'exp'], help="Initial solution vector type.")
 	parser.add_argument('--xsgm', type=float, nargs=1, required=False, default=None, help="xstart gauss mean.")
 	parser.add_argument('--xsgstd', type=float, nargs=1, required=False, default=None , help="xstart gauss std.")
 
 	parser.add_argument('--estart', type=str, nargs=1, required=True, choices=['dull', 'gauss'], help="Type of initialization of the evolution path p_sigma.")
-	parser.add_argument('--esgm', type=float, nargs=1, required=False, default=None, help="estart gauss mean.")
-	parser.add_argument('--esgstd', type=float, nargs=1, required=False, default=None, help="estart gauss std.")
+	parser.add_argument('--esgm', type=float, nargs=1, required=False, default=None, help="estart gauss distribution mean.")
+	parser.add_argument('--esgstd', type=float, nargs=1, required=False, default=None, help="estart gauss distribution std.")
+	parser.add_argument('--esumin', type=float, nargs=1, required=False, default=None, help="estart random uniform distribution min value.")
+	parser.add_argument('--esumax', type=float, nargs=1, required=False, default=None, help="estart random uniform distribution max value.")
+	parser.add_argument('--expl', type=float, nargs=1, required=False, default=None, help="estart random exponential distribution lambda.")
 
-	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen', 'sphere', 'hyperelli', 'rastrigin', 'schwefel', 'bukin', 'schaffer'], help="Type of test function.")
+	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen', 'sphere', 'hyperelli', 'rastrigin', 
+		'schwefel', 'bukin', 'schaffer'], help="Type of test function.")
 	parser.add_argument('-r', type=int, nargs=1, required=True, help="Number of repetition of the experiment.")
 	parser.add_argument('-o', type=str, nargs=1, required=True, help="Output file")
 
@@ -70,10 +75,19 @@ def createParser():
 	return parser
 
 def getXstartFun(ftype: str, args):
+	# https://docs.python.org/3/library/random.html
 	if(ftype == 'gauss'):
 		if(args.xsgm is None or args.xsgstd is None):
 			raise Exception("Argument 'xsgm' or 'xsgstd' not set.")
-		return lambda N: [gauss(args.xsgm[0], args.xsgstd[0]) for _ in range(N)]
+		return lambda N: [random.gauss(args.xsgm[0], args.xsgstd[0]) for _ in range(N)]
+	elif(ftype == 'uniform'):
+		if(args.esumin is None or args.esumax is None):
+			raise Exception("Argument 'esumin' or 'esumax' not set.")
+		return lambda N: [random.uniform(args.esumin[0], args.esumax[0]) for _ in range(N)]
+	elif(ftype == 'exp'):
+		if(args.expl is None ):
+			raise Exception("Argument 'expl' not set.")
+		return lambda N: [random.expovariate(args.expl[0]) for _ in range(N)]
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
@@ -81,31 +95,37 @@ def getEstartFun(ftype: str):
 	if(ftype == 'dull'):
 		return None
 	elif(ftype == 'gauss'):
-		return lambda N : [gauss(0,1) for _ in range(0,N)]
+		return lambda N : [random.gauss(0,1) for _ in range(0,N)]
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
 def getTestFunction(ftype: str):
 	"""
-		Returns test function and target minimum value (the minimum of the test function that should be reached).
+		Returns test function and target minimum value (the minimum of the test function that should be possible to reach).
+		https://en.wikipedia.org/wiki/Test_functions_for_optimization
 	"""
 	if(ftype == 'elli'):
 		return cma.ff.elli, 0.0    # Default is  elli(self, x, rot=0, xoffset=0, cond=1e6, actuator_noise=0.0, both=False)
-	if(ftype == 'rosen'):
-		return cma.ff.rosen, 0.0
-	if(ftype == 'sphere'):
+	elif(ftype == 'sphere'):
 		return pcma.ff.sphere, 0.0
-	if(ftype == 'hyperelli'):
+	elif(ftype == 'hyperelli'):
 		return cma.ff.hyperelli, 0.0
-	if(ftype == 'rastrigin'):
-		return cma.ff.rastrigin, 0.0
-	if(ftype == 'schwefel'):
+	elif(ftype == 'schwefel'):
 		return cma.ff.schwefelmult, 0.0
+	#
+	# single-objective optimization
+	#
+	elif(ftype == 'rosen'):
+		return cma.ff.rosen, 0.0
+	elif(ftype == 'rastrigin'):
+		return cma.ff.rastrigin, 0.0
+	elif(ftype == 'rosen'):
+		return cma.ff.rosen, 0.0
 	# Below functions in default variants are meant for 2-dimensional problems,
 	# these versions however are simplistically generalized to d-dim
-	if(ftype == 'bukin'):
+	elif(ftype == 'bukin'):
 		return cma.ff.bukin, 0.0
-	if(ftype == 'schaffer'):
+	elif(ftype == 'schaffer'):
 		return cma.ff.schaffer, 0.0
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
@@ -155,13 +175,18 @@ def saveInfo(args, returnVals, verbose = True):
 		print(arg)
 		print(str(outdf))
 
+def setSeed(arg):
+	if(arg is not None):
+		random.seed(arg[0])
+
 if __name__ == '__main__':
 	parser = createParser()
 	args = parser.parse_args()
+
+	setSeed(args.seed)
 
 	tmp = getTestFunction(args.testf[0])
 	results = RunTest(minimumTarget=tmp[1], testFun=tmp[0], repeat=args.r[0], initFunc=getEstartFun(args.estart[0]), maxLoops=args.maxl,
 		initXFun=getXstartFun(args.xstart[0], args), dim=args.dim[0], initSigma=args.sigma[0], epsilons=args.eps)
 	saveInfo(args, results)
-	cma.ff.cigar
 
