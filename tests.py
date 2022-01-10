@@ -5,41 +5,54 @@ import argparse
 import csv
 import pandas as pd
 import os, sys
+import numpy as np
+import numpy.linalg as norm
 
-def CountCMAESIterations(targetMinimumValue, initialSigma, m1_initEvolutionPath, initXFun, dim, testFunction):
+def CountCMAESIterations(ftarget, maxLoops, initialSigma, m1_initEvolutionPath, initXFun, dim, testFunction):
 	xstart = initXFun(dim)
-	es1 = pcma.CMAES(xstart=xstart, sigma=initialSigma, ftarget=targetMinimumValue, m1_initEvolutionPath = m1_initEvolutionPath)
+	es1 = pcma.CMAES(xstart=xstart, sigma=initialSigma, ftarget=ftarget, m1_initEvolutionPath = m1_initEvolutionPath)
 	iterCount = 0
+	isBest = True
 	while(not es1.stop()):
-		solutions = es1.ask()
-		es1.tell(solutions, [testFunction(x) for x in solutions])
+		points = es1.ask()
+		es1.tell(points, [testFunction(x) for x in points])
 		iterCount = iterCount + 1
-	return iterCount # aRT average running time
+		if(maxLoops < iterCount):
+			isBest = False
+			break
+	return iterCount, isBest # aRT average running time
 
-def AverageCountCMAESIterations(repeat, targetMinimumValue, initialSigma, m1_initEvolutionPath, initXFun, dim, testFunction):
+def AverageCountCMAESIterations(repeat, minimumTarget, maxLoops, epsilon, initialSigma, m1_initEvolutionPath, initXFun, dim, testFunction):
 	iterCount = 0
+	notReachedBest = 0
+	ftarget = epsilon + minimumTarget
 	for _ in range(0, repeat):
-		iterCount += CountCMAESIterations(targetMinimumValue=targetMinimumValue, initialSigma=initialSigma, 
+		ret = CountCMAESIterations(ftarget=ftarget, maxLoops=maxLoops, initialSigma=initialSigma,
 			m1_initEvolutionPath=m1_initEvolutionPath, initXFun=initXFun, dim=dim, testFunction=testFunction)
-	iterCount /= repeat # average
-	return iterCount
+		if(ret[1]):
+			iterCount += ret[0]
+		else: # does not reached best extremum
+			notReachedBest += 1
+			repeat -= 1
+	if(repeat != 0):
+		iterCount /= repeat # average
+	return iterCount, notReachedBest
 
-def RunTest(targetMin, testFun, repeat, initFunc, initXFun, initSigma, dim, steps: list = None):
-	# Nie można dać steps = [], bo to robi globalną zmienną
-	if(steps is None):
-		steps = [1.0, 0.5, 0.25, 0.1, 0.01, 0.001, 0.0001, 0.00001]
+def RunTest(minimumTarget, testFun, repeat, initFunc, initXFun, initSigma, dim, maxLoops, epsilons: list):
 	returnVals = []
-	for st in steps:
-		nonRandomIters = AverageCountCMAESIterations(repeat=repeat, targetMinimumValue=targetMin + st, initialSigma=initSigma, m1_initEvolutionPath=initFunc, initXFun=initXFun, dim=dim, testFunction=testFun)
-		returnVals.append(tuple([nonRandomIters, st]))
+	for eps in epsilons:
+		ret = AverageCountCMAESIterations(repeat=repeat, epsilon=eps, minimumTarget=minimumTarget, maxLoops=maxLoops,
+			initialSigma=initSigma, m1_initEvolutionPath=initFunc, initXFun=initXFun, dim=dim, testFunction=testFun)
+		returnVals.append(tuple([ret[0], eps, ret[1]]))
 	return returnVals
 		
 
 def createParser():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-s', type=float, nargs='+', required=False, default=[1.0, 0.5, 0.25, 0.1, 0.01, 0.001, 0.0001, 0.00001], help="Number of steps.")
+	parser.add_argument('-eps', type=float, nargs='+', required=False, default=[1, 0.01, 0.00001], help="Number of steps.")
 	parser.add_argument('--sigma', type=float, nargs=1, required=True, help="Initial sigma value.")
 	parser.add_argument('--dim', type=int, nargs=1, required=True, help="Number of dimensions.")
+	parser.add_argument('--maxl', type=int, nargs=1, required=False, default=21000, help="Max number of loops / evolution steps.")
 
 	parser.add_argument('--xstart', type=str, nargs=1, required=True, choices=['gauss'], help="Initial solution vector type.")
 	parser.add_argument('--xsgm', type=float, nargs=1, required=False, default=None, help="xstart gauss mean.")
@@ -49,7 +62,7 @@ def createParser():
 	parser.add_argument('--esgm', type=float, nargs=1, required=False, default=None, help="estart gauss mean.")
 	parser.add_argument('--esgstd', type=float, nargs=1, required=False, default=None, help="estart gauss std.")
 
-	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen'], help="Type of test function.")
+	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen', 'test'], help="Type of test function.")
 	parser.add_argument('-r', type=int, nargs=1, required=True, help="Number of repetition of the experiment.")
 	parser.add_argument('-o', type=str, nargs=1, required=True, help="Output file")
 
@@ -74,12 +87,16 @@ def getEstartFun(ftype: str):
 
 def getTestFunction(ftype: str):
 	"""
-		Returns test function and target minimum value (the value of global minimum).
+		Returns test function and target minimum value (the minimum of the test function that should be reached).
 	"""
 	if(ftype == 'elli'):
-		return pcma.ff.elli, 0.0
-	if(ftype == 'rosen'):
-		return pcma.ff.rosen, 0.0
+		return pcma.ff.elli, 0.0 
+	elif(ftype == 'rosen'):
+		return pcma.ff.rosen, 0.0 
+	elif(ftype == 'test'):
+		return cma.ff.cigar, 0.0 
+	elif(ftype == 'test'):
+		return cma.ff.cigar, 0.0 # warning, some functions in cma.ff use <list> ** 2 but this is invalid operation. It needs to be changed to for loop.
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
@@ -105,16 +122,25 @@ def saveInfo(args, returnVals, verbose = True):
 		'args': str(args)
 	}
 
-	for result, step in returnVals:
+	def getPos(columns, val):
+		pos = 0
+		for i, c in enumerate(list(columns)):
+			if(c > str(val)):
+				pos += 1
+			else:
+				break
+		return pos
+	def strMissReached(val):
+		return str(val) + '_' + 'msreach'
+
+	for result, step, missreached in returnVals:
 		if(str(step) not in list(outdf.columns)):
-			pos = 0
-			for i, c in enumerate(list(outdf.columns)):
-				if(c > str(step)):
-					pos += 1
-				else:
-					break
-			outdf.insert(pos, column = str(step), value='0')
+			posStep = getPos(outdf.columns, step)
+			outdf.insert(posStep, column = str(step), value='0')
+			outdf.insert(posStep + 1, column = strMissReached(step), value='0')
+
 		row[str(step)] = str(result)
+		row[strMissReached(step)] = str(missreached)
 	newrow = pd.DataFrame(row, index=[-1])
 
 	outdf = outdf.append(newrow, ignore_index=True)
@@ -130,7 +156,8 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	tmp = getTestFunction(args.testf[0])
-	results = RunTest(targetMin=tmp[1], testFun=tmp[0], repeat=args.r[0], initFunc=getEstartFun(args.estart[0]), 
-		initXFun=getXstartFun(args.xstart[0], args), dim=args.dim[0], initSigma=args.sigma[0])
+	results = RunTest(minimumTarget=tmp[1], testFun=tmp[0], repeat=args.r[0], initFunc=getEstartFun(args.estart[0]), maxLoops=args.maxl,
+		initXFun=getXstartFun(args.xstart[0], args), dim=args.dim[0], initSigma=args.sigma[0], epsilons=args.eps)
 	saveInfo(args, results)
+	cma.ff.cigar
 
