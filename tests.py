@@ -95,7 +95,7 @@ def getEstartFun(ftype: str, args):
 	if(ftype == 'dull'):
 		return None
 	elif(ftype == 'gauss'):
-		return lambda N : [random.gauss(args.esgm, args.esgstd) for _ in range(0,N)]
+		return lambda N : [random.gauss(args.esgm[0], args.esgstd[0]) for _ in range(0,N)]
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
@@ -186,7 +186,7 @@ if __name__ == '__main__':
 	setSeed(args.seed)
 
 	tmp = getTestFunction(args.testf[0])
-	results = RunTest(minimumTarget=tmp[1], testFun=tmp[0], repeat=args.r[0], initFunc=getEstartFun(args.estart[0]), maxLoops=args.maxl,
+	results = RunTest(minimumTarget=tmp[1], testFun=tmp[0], repeat=args.r[0], initFunc=getEstartFun(args.estart[0], args), maxLoops=args.maxl,
 		initXFun=getXstartFun(args.xstart[0], args), dim=args.dim[0], initSigma=args.sigma[0], epsilons=args.eps)
 	saveInfo(args, results)
 
