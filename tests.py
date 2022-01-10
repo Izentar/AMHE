@@ -58,13 +58,13 @@ def createParser():
 	parser.add_argument('--xstart', type=str, nargs=1, required=True, choices=['gauss', 'uniform', 'exp'], help="Initial solution vector type.")
 	parser.add_argument('--xsgm', type=float, nargs=1, required=False, default=None, help="xstart gauss mean.")
 	parser.add_argument('--xsgstd', type=float, nargs=1, required=False, default=None , help="xstart gauss std.")
+	parser.add_argument('--xsumin', type=float, nargs=1, required=False, default=None, help="xstart random uniform distribution min value.")
+	parser.add_argument('--xsumax', type=float, nargs=1, required=False, default=None, help="xstart random uniform distribution max value.")
+	parser.add_argument('--xsexpl', type=float, nargs=1, required=False, default=None, help="xstart random exponential distribution lambda.")
 
 	parser.add_argument('--estart', type=str, nargs=1, required=True, choices=['dull', 'gauss'], help="Type of initialization of the evolution path p_sigma.")
 	parser.add_argument('--esgm', type=float, nargs=1, required=False, default=None, help="estart gauss distribution mean.")
 	parser.add_argument('--esgstd', type=float, nargs=1, required=False, default=None, help="estart gauss distribution std.")
-	parser.add_argument('--esumin', type=float, nargs=1, required=False, default=None, help="estart random uniform distribution min value.")
-	parser.add_argument('--esumax', type=float, nargs=1, required=False, default=None, help="estart random uniform distribution max value.")
-	parser.add_argument('--expl', type=float, nargs=1, required=False, default=None, help="estart random exponential distribution lambda.")
 
 	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen', 'sphere', 'hyperelli', 'rastrigin', 
 		'schwefel', 'bukin', 'schaffer'], help="Type of test function.")
@@ -81,21 +81,21 @@ def getXstartFun(ftype: str, args):
 			raise Exception("Argument 'xsgm' or 'xsgstd' not set.")
 		return lambda N: [random.gauss(args.xsgm[0], args.xsgstd[0]) for _ in range(N)]
 	elif(ftype == 'uniform'):
-		if(args.esumin is None or args.esumax is None):
-			raise Exception("Argument 'esumin' or 'esumax' not set.")
-		return lambda N: [random.uniform(args.esumin[0], args.esumax[0]) for _ in range(N)]
+		if(args.xsumin is None or args.xsumax is None):
+			raise Exception("Argument 'xsumin' or 'xsumax' not set.")
+		return lambda N: [random.uniform(args.xsumin[0], args.xsumax[0]) for _ in range(N)]
 	elif(ftype == 'exp'):
-		if(args.expl is None ):
-			raise Exception("Argument 'expl' not set.")
-		return lambda N: [random.expovariate(args.expl[0]) for _ in range(N)]
+		if(args.xsexpl is None ):
+			raise Exception("Argument 'xsexpl' not set.")
+		return lambda N: [random.expovariate(args.xsexpl[0]) for _ in range(N)]
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
-def getEstartFun(ftype: str):
+def getEstartFun(ftype: str, args):
 	if(ftype == 'dull'):
 		return None
 	elif(ftype == 'gauss'):
-		return lambda N : [random.gauss(0,1) for _ in range(0,N)]
+		return lambda N : [random.gauss(args.esgm, args.esgstd) for _ in range(0,N)]
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
