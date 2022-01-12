@@ -419,12 +419,16 @@ class FitnessFunctions(object):  # TODO: this class is not necessary anymore? Bu
             return [10 * N + sum(xi**2 - 10 * np.cos(2 * np.pi * xi)) for xi in x]
             # return 10*N + sum(x**2 - 10*np.cos(2*np.pi*x), axis=1)
         N = len(x)
-        return 10 * N + sum(x**2 - 10 * np.cos(2 * np.pi * x))
+        return 10 * N + sum([xx**2 - 10 * np.cos(2 * np.pi * xx) for xx in x])
     def schaffer(self, x):
+        # Schaffer No. 7 generalized to N dimensions
         """ Schaffer function x0 in [-100..100]"""
         N = len(x)
-        s = x[0:N - 1]**2 + x[1:N]**2
-        return sum(s**0.25 * (np.sin(50 * s**0.1)**2 + 1))
+        # Original code in library:
+        # s = x[0:N - 1]**2 + x[1:N]**2
+        # return sum(s**0.25 * (np.sin(50 * s**0.1)**2 + 1))
+        s = [xx + yy for xx, yy in zip(x[0:N - 1], x[1:N])]
+        return sum([ss**0.25 * (np.sin(50 * ss**0.1)**2 + 1) for ss in s])
 
     def schwefelelli(self, x):
         s = 0
@@ -437,8 +441,8 @@ class FitnessFunctions(object):  # TODO: this class is not necessary anymore? Bu
         """multimodal Schwefel function with domain -500..500"""
         y = [x] if isscalar(x[0]) else x
         N = len(y[0])
-        f = array([418.9829 * N - 1.27275661e-5 * N - sum(x * np.sin(np.abs(x)**0.5))
-                + pen_fac * sum((abs(x) > 500) * (abs(x) - 500)**2) for x in y])
+        f = array([418.9829 * N - 1.27275661e-5 * N - sum([(xx * np.sin(np.abs(xx)**0.5)) for xx in x])
+                + pen_fac * sum([((abs(xx) > 500) * (abs(xx) - 500)**2) for xx in x]) for x in y])
         return f if len(f) > 1 else f[0]
     def schwefel2_22(self, x):
         """Schwefel 2.22 function"""
