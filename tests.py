@@ -62,9 +62,12 @@ def createParser():
 	parser.add_argument('--xsumax', type=float, nargs=1, required=False, default=None, help="xstart random uniform distribution max value.")
 	parser.add_argument('--xsexpl', type=float, nargs=1, required=False, default=None, help="xstart random exponential distribution lambda.")
 
-	parser.add_argument('--estart', type=str, nargs=1, required=True, choices=['dull', 'gauss'], help="Type of initialization of the evolution path p_sigma.")
+	parser.add_argument('--estart', type=str, nargs=1, required=True, choices=['dull', 'gauss', 'uniform', 'exp'], help="Type of initialization of the evolution path p_sigma.")
 	parser.add_argument('--esgm', type=float, nargs=1, required=False, default=None, help="estart gauss distribution mean.")
 	parser.add_argument('--esgstd', type=float, nargs=1, required=False, default=None, help="estart gauss distribution std.")
+	parser.add_argument('--esumin', type=float, nargs=1, required=False, default=None, help="estart random uniform distribution min value.")
+	parser.add_argument('--esumax', type=float, nargs=1, required=False, default=None, help="estart random uniform distribution max value.")
+	parser.add_argument('--esexpl', type=float, nargs=1, required=False, default=None, help="estart random exponential distribution lambda.")
 
 	parser.add_argument('--testf', type=str, nargs=1, required=True, choices=['elli', 'rosen', 'sphere', 'hyperelli', 'rastrigin', 
 		'schwefel', 'bukin', 'schaffer'], help="Type of test function.")
@@ -95,7 +98,17 @@ def getEstartFun(ftype: str, args):
 	if(ftype == 'dull'):
 		return None
 	elif(ftype == 'gauss'):
+		if(args.esgm is None or args.esgstd is None):
+			raise Exception("Argument 'esgm' or 'esgstd' not set.")
 		return lambda N : [random.gauss(args.esgm[0], args.esgstd[0]) for _ in range(0,N)]
+	elif(ftype == 'uniform'):
+		if(args.esumin is None or args.esumax is None):
+			raise Exception("Argument 'esumin' or 'esumax' not set.")
+		return lambda N: [random.uniform(args.esumin[0], args.esumax[0]) for _ in range(N)]
+	elif(ftype == 'exp'):
+		if(args.esexpl is None ):
+			raise Exception("Argument 'esexpl' not set.")
+		return lambda N: [random.expovariate(args.esexpl[0]) for _ in range(N)]
 	else:
 		raise Exception(f"Unknown parameter: {ftype}")
 
