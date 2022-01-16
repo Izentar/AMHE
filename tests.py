@@ -15,7 +15,7 @@ def CountCMAESIterations(ftarget, maxLoops, initialSigma, m1_initEvolutionPath, 
 	isBest = True
 	while(not es1.stop()):
 		points = es1.ask()
-		es1.tell(points, [testFunction(x) for x in points])
+		es1.tell(points, [testFunction(np.array(x)) for x in points])
 		iterCount = iterCount + 1
 		if(maxLoops < iterCount):
 			isBest = False
