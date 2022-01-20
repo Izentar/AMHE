@@ -81,15 +81,22 @@ def plotGraphs(epsilon, inputFile):
 		exp_vals[i%eps_count].append(dull_val - c(results.iloc[[i+3*eps_count]]['val'].values))
 		tempFun = c(results.iloc[[i]]['function'].values)
 		if(currentFun is not tempFun):
-			currentFun = tempFun
 			x = range(1,len(epsilon)+1)
 			gaussMeans = [mean(gauss_vals[i%eps_count]) for i in range(eps_count)]
 			uniMeans = [mean(uni_vals[i%eps_count]) for i in range(eps_count)]
 			expMeans = [mean(exp_vals[i%eps_count]) for i in range(eps_count)]
-			plt.plot(x, gaussMeans, x, uniMeans, x, expMeans)
+			plt.plot(x, [0 for _ in range(eps_count)] ,x, gaussMeans, x, uniMeans, x, expMeans)
+			plt.title(currentFun)
+			plt.xlabel('epsilon')
+			plt.ylabel('Uśredniona różnica liczby iteracji od przypadku kontrolnego (dull - f)')
+			plt.grid(True)
+			plt.xticks(x,epsilon)
+			plt.autoscale(enable=True, axis='y')
+			plt.legend(['dull','gauss', 'uniform', 'exp'])
 			plt.savefig(".\\imgs2\\" + str(name) + ".png")
 			name = name + 1
 			plt.clf()
+			currentFun = tempFun
 			for i in range(eps_count):
 				gauss_vals[i].clear()
 				uni_vals[i].clear()
