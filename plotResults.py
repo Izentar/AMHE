@@ -6,6 +6,7 @@ import argparse
 def createParser():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-i', type=str, nargs=1, required=True, help="Input file")
+	parser.add_argument('-o', type=str, nargs=1, required=False, help="Output processed csv file")
 	parser.add_argument('-eps', type=float, nargs='+', required=False, default=[1, 0.01, 0.00001], help="Number of steps used in experiment")
 	return parser
 
@@ -34,6 +35,8 @@ def plotGraphs(epsilon, inputFile):
 	df['estart'] = ['dull' if ('estart=[\'dull\']' in x) else ('gauss' if ('estart=[\'gauss\']' in x) else ('uniform' if ('estart=[\'uniform\']' in x) else 'exp')) for x in df['args']]
 	df['xstart'] = ['gauss' if ('xstart=[\'gauss\']' in x) else ('uniform' if ('xstart=[\'uniform\']' in x) else 'exp') for x in df['args']]
 
+	resultsList = []
+
 	name = 0
 	for fun in ['elli','rosen','sphere','hyperelli','rastrigin','schwefel','bukin','schaffer']:
 		for xstart in ['gauss', 'uniform', 'exp']:
@@ -43,8 +46,15 @@ def plotGraphs(epsilon, inputFile):
 					gauss = df[(df['sigma'] == sigma) & (df['dim'] == dim) & (df['xstart'] == xstart) & (df['function'] == fun) & (df['estart'] == 'gauss')]
 					uni = df[(df['sigma'] == sigma) & (df['dim'] == dim) & (df['xstart'] == xstart) & (df['function'] == fun) & (df['estart'] == 'uniform')]
 					exp = df[(df['sigma'] == sigma) & (df['dim'] == dim) & (df['xstart'] == xstart) & (df['function'] == fun) & (df['estart'] == 'exp')]
+					for eps in epsilon:
+						resultsList.append([fun, xstart, dim, sigma, 'dull', eps, c(dull[str(eps)].values)])
+					for eps in epsilon:
+						resultsList.append([fun, xstart, dim, sigma, 'gauss', eps, c(dull[str(eps)].values)])
+					for eps in epsilon:
+						resultsList.append([fun, xstart, dim, sigma, 'uniform', eps, c(dull[str(eps)].values)])
+					for eps in epsilon:
+						resultsList.append([fun, xstart, dim, sigma, 'exp', eps, c(dull[str(eps)].values)])
 					x = range(1,len(epsilon)+1)
-					#if(len(gauss) > 0):
 					plt.plot(x, [c(dull[str(eps)].values) for eps in epsilon], x, [c(gauss[str(eps)].values) for eps in epsilon], x, [c(uni[str(eps)].values) for eps in epsilon], x, [c(exp[str(eps)].values) for eps in epsilon])
 					plt.xlabel('epsilon')
 					plt.ylabel('Liczba iteracji')
@@ -56,8 +66,12 @@ def plotGraphs(epsilon, inputFile):
 					plt.savefig(".\\imgs\\" + str(name) + ".png")
 					plt.clf()
 					name = name + 1
+	results = pd.DataFrame(resultsList, columns = ['function', 'xstart', 'dim', 'sigma', 'estart', 'eps', 'val'])
+	return(results)
 
 if __name__ == '__main__':
 	parser = createParser()
 	args = parser.parse_args()
-	plotGraphs(epsilon=args.eps, inputFile=args.i[0])
+	results = plotGraphs(epsilon=args.eps, inputFile=args.i[0])
+	if(args.o[0] != ''):
+		results.to_csv(args.o[0], sep=';')
