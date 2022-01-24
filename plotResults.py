@@ -75,16 +75,23 @@ def plotGraphs(epsilon, inputFile):
 	exp_vals = [[] for i in range(len(epsilon))]
 	currentFun = c(results.iloc[[0]]['function'].values)
 	name = 0
-	for rep in range(0,int(len(results) / eps_count)-4, 1):
+	nextFun = ""
+	for rep in range(0,int(len(results) / (4*eps_count)), 1):
 		for i in range(0,eps_count, 1):
-			mult = rep * eps_count
+			mult = rep * eps_count * 4
 			step = i + mult
 			dull_vals[i].append(c(results.iloc[[step+0*eps_count]]['val'].values))
 			gauss_vals[i].append(c(results.iloc[[step+1*eps_count]]['val'].values))
 			uni_vals[i].append(c(results.iloc[[step+2*eps_count]]['val'].values))
 			exp_vals[i].append(c(results.iloc[[step+3*eps_count]]['val'].values))
+
+			print(step)
 			tempFun = c(results.iloc[[step]]['function'].values)
-			if(currentFun is not tempFun or step == (int(len(results) / eps_count)-4) * eps_count - eps_count):
+			if(step+3*eps_count + 1 < len(results)):
+				nextFun = c(results.iloc[[step+3*eps_count + 1]]['function'].values)
+			if(tempFun == "rosen" and i == (0)):
+				print(dull_vals[0])
+			if((nextFun is not tempFun and nextFun != "") or step == len(results) - 3*eps_count - 1):
 				x = range(1,len(epsilon)+1)
 				gaussMeans = [mean(dull_vals[j]) - mean(gauss_vals[j]) for j in range(0,eps_count, 1)]
 				uniMeans = [mean(dull_vals[j]) - mean(uni_vals[j]) for j in range(0,eps_count, 1)]
@@ -100,7 +107,7 @@ def plotGraphs(epsilon, inputFile):
 				plt.savefig(".\\imgs2\\" + str(name) + ".png")
 				name = name + 1
 				plt.clf()
-				currentFun = tempFun
+				currentFun = nextFun
 				for i in range(eps_count):
 					dull_vals[i].clear()
 					gauss_vals[i].clear()
