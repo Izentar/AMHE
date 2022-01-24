@@ -74,34 +74,38 @@ def plotGraphs(epsilon, inputFile):
 	exp_vals = [[] for i in range(len(epsilon))]
 	currentFun = c(results.iloc[[0]]['function'].values)
 	name = 0
-	for i in range(0,(len(results)-4*eps_count + 1), 1):
-		dull_val = c(results.iloc[[i]]['val'].values)
-		gauss_vals[i%eps_count].append(dull_val - c(results.iloc[[i+1*eps_count]]['val'].values))
-		uni_vals[i%eps_count].append(dull_val - c(results.iloc[[i+2*eps_count]]['val'].values))
-		exp_vals[i%eps_count].append(dull_val - c(results.iloc[[i+3*eps_count]]['val'].values))
-		tempFun = c(results.iloc[[i]]['function'].values)
-		if(currentFun is not tempFun or i == ((len(results)-4*eps_count))):
-			print(i%eps_count)
-			x = range(1,len(epsilon)+1)
-			gaussMeans = [mean(gauss_vals[i%eps_count]) for i in range(eps_count)]
-			uniMeans = [mean(uni_vals[i%eps_count]) for i in range(eps_count)]
-			expMeans = [mean(exp_vals[i%eps_count]) for i in range(eps_count)]
-			plt.plot(x, [0 for _ in range(eps_count)] ,x, gaussMeans, x, uniMeans, x, expMeans)
-			plt.title("f(x) = " + str(currentFun))
-			plt.xlabel('epsilon')
-			plt.ylabel('Uśredniona różnica liczby iteracji \n od przypadku kontrolnego [dull - f(x)]')
-			plt.grid(True)
-			plt.xticks(x,epsilon)
-			plt.autoscale(enable=True, axis='y')
-			plt.legend(['dull','gauss', 'uniform', 'exp'], loc="center right")
-			plt.savefig(".\\imgs2\\" + str(name) + ".png")
-			name = name + 1
-			plt.clf()
-			currentFun = tempFun
-			for i in range(eps_count):
-				gauss_vals[i].clear()
-				uni_vals[i].clear()
-				exp_vals[i].clear()
+	for rep in range(0,int(len(results) / eps_count)-4, 1):
+		for i in range(0,eps_count, 1):
+			mult = rep * eps_count
+			step = i + mult
+			#print(step)
+			dull_val = c(results.iloc[[step]]['val'].values)
+			gauss_vals[i].append(dull_val - c(results.iloc[[step+1*eps_count]]['val'].values))
+			uni_vals[i].append(dull_val - c(results.iloc[[step+2*eps_count]]['val'].values))
+			exp_vals[i].append(dull_val - c(results.iloc[[step+3*eps_count]]['val'].values))
+			tempFun = c(results.iloc[[step]]['function'].values)
+			if(currentFun is not tempFun or step == (int(len(results) / eps_count)-4) * eps_count - eps_count):
+				print(step%eps_count)
+				x = range(1,len(epsilon)+1)
+				gaussMeans = [mean(gauss_vals[j]) for j in range(eps_count)]
+				uniMeans = [mean(uni_vals[j]) for j in range(eps_count)]
+				expMeans = [mean(exp_vals[j]) for j in range(eps_count)]
+				plt.plot(x, [0 for _ in range(eps_count)] ,x, gaussMeans, x, uniMeans, x, expMeans)
+				plt.title("f(x) = " + str(currentFun))
+				plt.xlabel('epsilon')
+				plt.ylabel('Uśredniona różnica liczby iteracji \n od przypadku kontrolnego [dull - f(x)]')
+				plt.grid(True)
+				plt.xticks(x,epsilon)
+				plt.autoscale(enable=True, axis='y')
+				plt.legend(['dull','gauss', 'uniform', 'exp'], loc="center right")
+				plt.savefig(".\\imgs2\\" + str(name) + ".png")
+				name = name + 1
+				plt.clf()
+				currentFun = tempFun
+				for i in range(eps_count):
+					gauss_vals[i].clear()
+					uni_vals[i].clear()
+					exp_vals[i].clear()
 	return(results)
 
 if __name__ == '__main__':
