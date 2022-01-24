@@ -74,13 +74,13 @@ def plotGraphs(epsilon, inputFile):
 	exp_vals = [[] for i in range(len(epsilon))]
 	currentFun = c(results.iloc[[0]]['function'].values)
 	name = 0
-	for i in range(0,(len(results)-1*eps_count), 1):
+	for i in range(0,(len(results)-4*eps_count), 1):
 		dull_val = c(results.iloc[[i]]['val'].values)
 		gauss_vals[i%eps_count].append(dull_val - c(results.iloc[[i+1*eps_count]]['val'].values))
 		uni_vals[i%eps_count].append(dull_val - c(results.iloc[[i+2*eps_count]]['val'].values))
 		exp_vals[i%eps_count].append(dull_val - c(results.iloc[[i+3*eps_count]]['val'].values))
 		tempFun = c(results.iloc[[i]]['function'].values)
-		if(currentFun is not tempFun or i == ((len(results)-1*eps_count)-1)):
+		if(currentFun is not tempFun or i == ((len(results)-4*eps_count)-1)):
 			x = range(1,len(epsilon)+1)
 			gaussMeans = [mean(gauss_vals[i%eps_count]) for i in range(eps_count)]
 			uniMeans = [mean(uni_vals[i%eps_count]) for i in range(eps_count)]
