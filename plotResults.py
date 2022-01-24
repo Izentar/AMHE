@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from statistics import mean
+from statistics import mean, median
 
 def createParser():
 	parser = argparse.ArgumentParser()
@@ -69,6 +69,7 @@ def plotGraphs(epsilon, inputFile):
 					name = name + 1
 	results = pd.DataFrame(resultsList, columns = ['function', 'xstart', 'dim', 'sigma', 'estart', 'eps', 'val'])
 	eps_count = len(epsilon)
+	dull_vals = [[] for i in range(len(epsilon))]
 	gauss_vals = [[] for i in range(len(epsilon))]
 	uni_vals = [[] for i in range(len(epsilon))]
 	exp_vals = [[] for i in range(len(epsilon))]
@@ -78,18 +79,16 @@ def plotGraphs(epsilon, inputFile):
 		for i in range(0,eps_count, 1):
 			mult = rep * eps_count
 			step = i + mult
-			#print(step)
-			dull_val = c(results.iloc[[step]]['val'].values)
-			gauss_vals[i].append(dull_val - c(results.iloc[[step+1*eps_count]]['val'].values))
-			uni_vals[i].append(dull_val - c(results.iloc[[step+2*eps_count]]['val'].values))
-			exp_vals[i].append(dull_val - c(results.iloc[[step+3*eps_count]]['val'].values))
+			dull_vals[i].append(c(results.iloc[[step+0*eps_count]]['val'].values))
+			gauss_vals[i].append(c(results.iloc[[step+1*eps_count]]['val'].values))
+			uni_vals[i].append(c(results.iloc[[step+2*eps_count]]['val'].values))
+			exp_vals[i].append(c(results.iloc[[step+3*eps_count]]['val'].values))
 			tempFun = c(results.iloc[[step]]['function'].values)
 			if(currentFun is not tempFun or step == (int(len(results) / eps_count)-4) * eps_count - eps_count):
-				print(step%eps_count)
 				x = range(1,len(epsilon)+1)
-				gaussMeans = [mean(gauss_vals[j]) for j in range(eps_count)]
-				uniMeans = [mean(uni_vals[j]) for j in range(eps_count)]
-				expMeans = [mean(exp_vals[j]) for j in range(eps_count)]
+				gaussMeans = [mean(dull_vals[j]) - mean(gauss_vals[j]) for j in range(0,eps_count, 1)]
+				uniMeans = [mean(dull_vals[j]) - mean(uni_vals[j]) for j in range(0,eps_count, 1)]
+				expMeans = [mean(dull_vals[j]) - mean(exp_vals[j]) for j in range(0,eps_count, 1)]
 				plt.plot(x, [0 for _ in range(eps_count)] ,x, gaussMeans, x, uniMeans, x, expMeans)
 				plt.title("f(x) = " + str(currentFun))
 				plt.xlabel('epsilon')
@@ -103,6 +102,7 @@ def plotGraphs(epsilon, inputFile):
 				plt.clf()
 				currentFun = tempFun
 				for i in range(eps_count):
+					dull_vals[i].clear()
 					gauss_vals[i].clear()
 					uni_vals[i].clear()
 					exp_vals[i].clear()
