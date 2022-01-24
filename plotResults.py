@@ -86,13 +86,13 @@ def plotGraphs(epsilon, inputFile):
 			uniMeans = [mean(uni_vals[i%eps_count]) for i in range(eps_count)]
 			expMeans = [mean(exp_vals[i%eps_count]) for i in range(eps_count)]
 			plt.plot(x, [0 for _ in range(eps_count)] ,x, gaussMeans, x, uniMeans, x, expMeans)
-			plt.title(currentFun)
+			plt.title("f(x) = " + str(currentFun))
 			plt.xlabel('epsilon')
-			plt.ylabel('Uśredniona różnica liczby iteracji od przypadku kontrolnego (dull - f)')
+			plt.ylabel('Uśredniona różnica liczby iteracji \n od przypadku kontrolnego [dull - f(x)]')
 			plt.grid(True)
 			plt.xticks(x,epsilon)
 			plt.autoscale(enable=True, axis='y')
-			plt.legend(['dull','gauss', 'uniform', 'exp'])
+			plt.legend(['dull','gauss', 'uniform', 'exp'], loc="center right")
 			plt.savefig(".\\imgs2\\" + str(name) + ".png")
 			name = name + 1
 			plt.clf()
